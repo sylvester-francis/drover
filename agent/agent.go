@@ -24,7 +24,7 @@ package agent
 // which keeps the surface small and auditable.
 type Agent struct {
 	// Model is the provider model id, passed through to whatever endpoint the
-	// leash proxy fronts (e.g. "gpt-4o", "claude-sonnet-4").
+	// leash proxy fronts (e.g. "gpt-5.5", "claude-sonnet-5", "gemini-3-pro").
 	Model string
 
 	// System is the instruction preamble sent as the first System message.

@@ -85,7 +85,7 @@ Point it at a real model **through a leash proxy** to get governance for free:
 ```sh
 # leash is governing spend on :8080, fronting OpenAI
 drover run \
-  --provider openai --model gpt-4o \
+  --provider openai --model gpt-5.5 \
   --leash-url http://127.0.0.1:8080 \
   --goal "fetch example.com and summarize it"
 ```
@@ -97,6 +97,24 @@ drover resume --run <run-id>
 ```
 
 The run id doubles as leash's `X-Loop-Id`, so a job and its budget are the same thing across a crash. To watch the whole stack stop an agent on its budget, offline, run [`examples/e2e/demo.sh`](examples/e2e).
+
+## Providers
+
+drover speaks to OpenAI, Anthropic, Google Gemini, and a local Ollama, plus an offline `fake`. Gemini and Ollama expose OpenAI-compatible endpoints, so they share the OpenAI wire; Anthropic has its own. Pick one with `--provider` and a current model id:
+
+| `--provider` | Example model | Key |
+|---|---|---|
+| `openai` | `gpt-5.5` | `OPENAI_API_KEY` |
+| `anthropic` | `claude-sonnet-5` | `ANTHROPIC_API_KEY` |
+| `gemini` | `gemini-3-pro` | `GEMINI_API_KEY` |
+| `ollama` | `llama3.2` | none (local) |
+| `fake` | any | none (offline) |
+
+Model ids move fast; use a current one. With `--leash-url` set, calls route through a leash proxy for governance; without it, drover talks to the provider directly. A local Ollama agent, no key and no proxy:
+
+```sh
+drover run --provider ollama --model llama3.2 --goal "summarize this repo's README"
+```
 
 ## Define your own agent (in Go)
 
@@ -111,7 +129,7 @@ import (
 )
 
 loop := &agent.Loop{
-	Agent:  agent.Agent{Model: "gpt-4o", System: "…", Tools: []agent.Tool{myTool}},
+	Agent:  agent.Agent{Model: "gpt-5.5", System: "…", Tools: []agent.Tool{myTool}},
 	Client: provider.NewOpenAI(provider.Config{BaseURL: leashURL, RunID: id}),
 	Tools:  agent.NewToolset(myTool),
 }

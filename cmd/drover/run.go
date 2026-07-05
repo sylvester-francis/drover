@@ -50,10 +50,10 @@ type jobFlags struct {
 
 func registerJobFlags(fs *flag.FlagSet) *jobFlags {
 	c := &jobFlags{}
-	fs.StringVar(&c.provider, "provider", envStr("DROVER_PROVIDER", "openai"), "model provider: openai, anthropic, or fake")
-	fs.StringVar(&c.model, "model", envStr("DROVER_MODEL", ""), "model id (required for openai/anthropic)")
+	fs.StringVar(&c.provider, "provider", envStr("DROVER_PROVIDER", "openai"), "model provider: openai, anthropic, gemini, ollama, or fake")
+	fs.StringVar(&c.model, "model", envStr("DROVER_MODEL", ""), "model id (required for openai/anthropic/gemini/ollama)")
 	fs.StringVar(&c.system, "system", envStr("DROVER_SYSTEM", defaultSystem), "system prompt")
-	fs.StringVar(&c.leashURL, "leash-url", envStr("DROVER_LEASH_URL", "http://127.0.0.1:8080"), "leash proxy URL that fronts the model")
+	fs.StringVar(&c.leashURL, "leash-url", envStr("DROVER_LEASH_URL", ""), "route model calls through a leash proxy for governance (empty talks to the provider directly)")
 	fs.StringVar(&c.db, "db", envStr("DROVER_DB", "drover.db"), "durable store path (SQLite)")
 	fs.StringVar(&c.apiKey, "api-key", "", "provider API key (or set OPENAI_API_KEY / ANTHROPIC_API_KEY)")
 	fs.StringVar(&c.leashToken, "leash-token", envStr("LEASH_TOKEN", ""), "X-Leash-Token, if the proxy requires auth")
@@ -70,8 +70,7 @@ type runStore interface {
 
 // build assembles the store, model client, and runner for a run id.
 func (c *jobFlags) build(runID string) (runStore, *runner.Runner, error) {
-	client, err := buildClient(c.provider, provider.Config{
-		BaseURL:    c.leashURL,
+	client, err := buildClient(c.provider, c.leashURL, provider.Config{
 		APIKey:     pickKey(c.apiKey, c.provider),
 		LeashToken: c.leashToken,
 		RunID:      runID,
@@ -114,7 +113,11 @@ func runCmd(args []string) error {
 	defer store.Close()
 
 	ctx := context.Background()
-	fmt.Fprintf(os.Stderr, "drover: run %s  (%s/%s → %s)\n", id, c.provider, c.model, c.leashURL)
+	dest := c.leashURL
+	if dest == "" {
+		dest = "direct"
+	}
+	fmt.Fprintf(os.Stderr, "drover: run %s  (%s/%s → %s)\n", id, c.provider, c.model, dest)
 	if err := r.Start(ctx, id, *goal); err != nil {
 		return err
 	}
@@ -173,17 +176,32 @@ func (c *jobFlags) requireModel() error {
 	return nil
 }
 
-// buildClient selects a model.Client by provider name.
-func buildClient(prov string, cfg provider.Config) (model.Client, error) {
+// buildClient selects a model.Client. When leashURL is set, calls route through the
+// leash proxy (openai, gemini, and ollama all speak the OpenAI wire to it; anthropic
+// speaks its own), and leash forwards to the real upstream. When leashURL is empty,
+// drover talks to the provider's own endpoint directly, ungoverned.
+func buildClient(prov, leashURL string, cfg provider.Config) (model.Client, error) {
+	if prov == "fake" {
+		return fakeClient(), nil
+	}
+	if leashURL != "" {
+		cfg.BaseURL = leashURL
+		if prov == "anthropic" {
+			return provider.NewAnthropic(cfg), nil
+		}
+		return provider.NewOpenAI(cfg), nil
+	}
 	switch prov {
 	case "openai":
 		return provider.NewOpenAI(cfg), nil
 	case "anthropic":
 		return provider.NewAnthropic(cfg), nil
-	case "fake":
-		return fakeClient(), nil
+	case "gemini":
+		return provider.NewGemini(cfg), nil
+	case "ollama":
+		return provider.NewOllama(cfg), nil
 	default:
-		return nil, fmt.Errorf("unknown provider %q (want openai, anthropic, or fake)", prov)
+		return nil, fmt.Errorf("unknown provider %q (want openai, anthropic, gemini, ollama, or fake)", prov)
 	}
 }
 
@@ -211,7 +229,12 @@ func pickKey(flagKey, prov string) string {
 		return os.Getenv("OPENAI_API_KEY")
 	case "anthropic":
 		return os.Getenv("ANTHROPIC_API_KEY")
-	default:
+	case "gemini":
+		if k := os.Getenv("GEMINI_API_KEY"); k != "" {
+			return k
+		}
+		return os.Getenv("GOOGLE_API_KEY")
+	default: // ollama and fake need no key
 		return ""
 	}
 }

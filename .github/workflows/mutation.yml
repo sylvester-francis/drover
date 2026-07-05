@@ -1,0 +1,32 @@
+name: mutation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          check-latest: true
+      - name: Install gremlins
+        run: go install github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0
+      # Mutate the packages where the logic lives and has direct tests: the governor
+      # seam (429 classification) and the engine wiring. gremlins unleash takes one
+      # path, so loop. A covered mutant the tests do not kill is a gap in the suite.
+      - name: Mutation test the governor seam and engine wiring
+        run: |
+          set -e
+          for pkg in ./provider ./runner; do
+            echo "== gremlins unleash $pkg =="
+            gremlins unleash "$pkg"
+          done

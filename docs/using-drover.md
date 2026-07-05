@@ -40,7 +40,7 @@ model, put a leash proxy in front of it and point drover at the proxy:
 ```sh
 # leash is metering spend on :8080, fronting OpenAI
 drover run \
-  --provider openai --model gpt-4o \
+  --provider openai --model gpt-5.5 \
   --leash-url http://127.0.0.1:8080 \
   --goal "fetch example.com and summarize it"
 ```
@@ -65,7 +65,7 @@ import (
 )
 
 loop := &agent.Loop{
-	Agent:  agent.Agent{Model: "gpt-4o", System: "be concise", Tools: []agent.Tool{myTool}},
+	Agent:  agent.Agent{Model: "gpt-5.5", System: "be concise", Tools: []agent.Tool{myTool}},
 	Client: provider.NewOpenAI(provider.Config{BaseURL: leashURL, RunID: id}),
 	Tools:  agent.NewToolset(myTool),
 }
@@ -120,9 +120,21 @@ not a crash of the runner.
 
 ## 5. Providers and the governor seam
 
-drover ships OpenAI- and Anthropic-compatible clients plus an offline `Fake`, all
-behind one `model.Client` interface. Each is pointed at a leash proxy, and drover
-reads leash's verdict off the wire:
+drover speaks to several providers behind one `model.Client` interface. OpenAI,
+Google Gemini, and a local Ollama share the OpenAI chat-completions wire (Gemini and
+Ollama expose OpenAI-compatible endpoints); Anthropic has its own; `fake` is offline.
+Model ids move fast, so use a current one:
+
+| `--provider` | Example model | Key |
+|---|---|---|
+| `openai` | `gpt-5.5` | `OPENAI_API_KEY` |
+| `anthropic` | `claude-sonnet-5` | `ANTHROPIC_API_KEY` |
+| `gemini` | `gemini-3-pro` | `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) |
+| `ollama` | `llama3.2` | none (local) |
+
+With `--leash-url` set, calls route through a leash proxy for governance; without it,
+drover talks to the provider's own endpoint directly (ungoverned). Either way, drover
+reads the verdict off the wire:
 
 | leash responds | drover does |
 |---|---|
@@ -150,12 +162,12 @@ Common flags (each also reads a `DROVER_`-prefixed environment variable):
 | Flag | Meaning |
 |---|---|
 | `--goal` | the task for the agent (required for `run`) |
-| `--provider` | `openai`, `anthropic`, or `fake` |
-| `--model` | the model id (required for openai/anthropic) |
-| `--leash-url` | the leash proxy URL that fronts the model |
+| `--provider` | `openai`, `anthropic`, `gemini`, `ollama`, or `fake` |
+| `--model` | the model id (required for openai/anthropic/gemini/ollama) |
+| `--leash-url` | route calls through a leash proxy for governance (empty talks to the provider directly) |
 | `--db` | the durable store path (SQLite) |
 | `--run` | the run id; generated if empty, and used as leash's `X-Loop-Id` |
-| `--api-key` | the provider key, or set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` |
+| `--api-key` | the provider key, or set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` |
 | `--leash-token` | `X-Leash-Token`, if the proxy requires auth |
 | `--max-steps` | loop bound (0 uses the default) |
 
@@ -168,7 +180,7 @@ was in flight. If a job is interrupted, resume it by run id: completed steps rep
 from the journal without re-running, and the agent continues where it left off.
 
 ```sh
-drover resume --run <run-id> --db drover.db --provider openai --model gpt-4o --leash-url http://127.0.0.1:8080
+drover resume --run <run-id> --db drover.db --provider openai --model gpt-5.5 --leash-url http://127.0.0.1:8080
 ```
 
 Resume rebuilds the same runner (pass the same provider, model, and tools), then

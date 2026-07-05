@@ -100,7 +100,7 @@
     <h1 class="logo">dr<span class="glyph">&#10132;</span>ver</h1>
     <p class="tagline">Durable, budgeted agent runner</p>
     <p class="rule">plan &middot; act &middot; observe &middot; survive</p>
-    <p class="lead">An agent is a loop. drover makes that loop <strong>survive a crash and stay under budget</strong> &mdash; by running it as a <a href="https://github.com/sylvester-francis/rerun">rerun</a> workflow with every model call governed by the <a href="https://github.com/sylvester-francis/leash">leash</a> proxy.</p>
+    <p class="lead">An agent is a loop. drover makes that loop <strong>survive a crash and stay under budget</strong>, by running it as a <a href="https://github.com/sylvester-francis/rerun">rerun</a> workflow with every model call governed by the <a href="https://github.com/sylvester-francis/leash">leash</a> proxy.</p>
     <div class="cta">
       <a class="btn primary" href="https://github.com/sylvester-francis/drover">GitHub &rarr;</a>
       <a class="btn" href="https://github.com/sylvester-francis/drover/blob/main/DESIGN.md">Design</a>
@@ -111,8 +111,8 @@
   </header>
 
   <section>
-    <h2>Two ways the loop breaks &mdash; each already solved</h2>
-    <p class="lead" style="margin-top:0;text-align:left;max-width:none">An agent is a loop: plan, act, observe, repeat. In production it <strong>isn't durable</strong> &mdash; a crash halfway through a twelve-step job restarts the whole job and pays for it twice &mdash; and it <strong>isn't bounded</strong> &mdash; nothing stops a stuck loop from spending forever. drover doesn't reinvent either fix. It runs the loop as a rerun workflow and points every model call at a leash proxy: <strong>rerun makes the run survive a crash; leash makes it survive the invoice.</strong></p>
+    <h2>Two ways the loop breaks, each already solved</h2>
+    <p class="lead" style="margin-top:0;text-align:left;max-width:none">An agent is a loop: plan, act, observe, repeat. In production it <strong>isn't durable</strong> (a crash halfway through a twelve-step job restarts the whole job and pays for it twice) and it <strong>isn't bounded</strong> (nothing stops a stuck loop from spending forever). drover doesn't reinvent either fix. It runs the loop as a rerun workflow and points every model call at a leash proxy: <strong>rerun makes the run survive a crash; leash makes it survive the invoice.</strong></p>
   </section>
 
   <section>
@@ -125,16 +125,16 @@
         <span class="f">Do</span>(<span class="s">"tool-N"</span>, invokeTool) <span class="c">// a side effect, journaled once</span>
     }
 }</pre>
-    <p class="note" style="margin-top:16px">Every nondeterministic input &mdash; the model's reply, a tool's result &mdash; is captured inside a <code>Do</code>, so a crash resumes at the step that was in flight. drover keeps <strong>no state of its own</strong>: on recovery the conversation is refolded from the journal. A completed step replays without re-running; a tool caught mid-flight re-runs (at-least-once), so <strong>tools must be idempotent</strong>.</p>
+    <p class="note" style="margin-top:16px">Every nondeterministic input (the model's reply, a tool's result) is captured inside a <code>Do</code>, so a crash resumes at the step that was in flight. drover keeps <strong>no state of its own</strong>: on recovery the conversation is refolded from the journal. A completed step replays without re-running; a tool caught mid-flight re-runs (at-least-once), so <strong>tools must be idempotent</strong>.</p>
   </section>
 
   <section>
     <h2>Owns only orchestration</h2>
     <div class="grid">
-      <div class="card"><span class="icon">&#8635;</span><h3>Durable by construction</h3><p>The loop is a rerun workflow. A crash resumes at the in-flight step, replaying completed ones from the journal &mdash; no repeated work, no double charge.</p></div>
-      <div class="card"><span class="icon">&#10132;</span><h3>Bounded by leash</h3><p>Every call goes through the leash proxy. When a budget trips, the call is refused and the run stops &mdash; cleanly, with the reason recorded.</p></div>
-      <div class="card"><span class="icon">&#9679;</span><h3>Composes, owns nothing</h3><p>No persistence of its own, no governance of its own. drover is one durable agent leash can govern &mdash; not a special case.</p></div>
-      <div class="card"><span class="icon">&#9881;</span><h3>Any provider, in Go</h3><p>OpenAI or Anthropic behind one interface, plus an offline fake. Define agents and tools in a little Go &mdash; no SDK lock-in, no config DSL.</p></div>
+      <div class="card"><span class="icon">&#8635;</span><h3>Durable by construction</h3><p>The loop is a rerun workflow. A crash resumes at the in-flight step, replaying completed ones from the journal: no repeated work, no double charge.</p></div>
+      <div class="card"><span class="icon">&#10132;</span><h3>Bounded by leash</h3><p>Every call goes through the leash proxy. When a budget trips, the call is refused and the run stops cleanly, with the reason recorded.</p></div>
+      <div class="card"><span class="icon">&#9679;</span><h3>Composes, owns nothing</h3><p>No persistence of its own, no governance of its own. drover is one durable agent leash can govern, not a special case.</p></div>
+      <div class="card"><span class="icon">&#9881;</span><h3>Any provider, in Go</h3><p>OpenAI, Anthropic, Gemini, and a local Ollama behind one interface, plus an offline fake. Define agents and tools in a little Go: no SDK lock-in, no config DSL.</p></div>
     </div>
   </section>
 
