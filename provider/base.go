@@ -34,10 +34,13 @@ import (
 
 // Config configures a leash-fronted HTTP model client.
 type Config struct {
-	// BaseURL is the leash proxy URL (e.g. http://127.0.0.1:8080). drover never
-	// talks to a model directly; leash fronts it and governs the spend.
+	// BaseURL overrides the endpoint. Set it to a leash proxy URL to route calls
+	// through the governor; leave it empty to talk to the provider's own endpoint
+	// directly (ungoverned). Each provider constructor supplies a default.
 	BaseURL string
-	// APIKey is the upstream provider credential leash forwards to the model.
+	// APIKey is the provider credential (a Bearer token for OpenAI and Gemini, an
+	// x-api-key for Anthropic). Empty for a local Ollama, or when a leash proxy
+	// holds the key.
 	APIKey string
 	// LeashToken is the optional X-Leash-Token when the proxy requires auth.
 	LeashToken string

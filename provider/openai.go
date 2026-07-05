@@ -20,20 +20,51 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/sylvester-francis/drover/model"
 )
 
-// OpenAI is a model.Client for the OpenAI Chat Completions API, pointed at a
-// leash proxy URL.
+// OpenAI is a model.Client for the OpenAI Chat Completions wire format. That wire
+// is spoken by several endpoints, so NewOpenAI, NewGemini, and NewOllama all return
+// one of these, differing only in the chat-completions URL and the API key. Pointed
+// at a leash proxy URL it is governed; pointed at a provider directly it is not.
 type OpenAI struct {
 	base
-	apiKey string
+	apiKey  string
+	chatURL string
 }
 
-// NewOpenAI builds an OpenAI client from cfg.
+// NewOpenAI builds a client for the OpenAI Chat Completions API. cfg.BaseURL
+// overrides the endpoint (set it to a leash proxy URL to be governed).
 func NewOpenAI(cfg Config) *OpenAI {
-	return &OpenAI{base: newBase(cfg), apiKey: cfg.APIKey}
+	return newOpenAICompat(cfg, "https://api.openai.com", "/v1/chat/completions")
+}
+
+// NewGemini builds a client for Google Gemini through its OpenAI-compatible endpoint
+// (generativelanguage.googleapis.com/v1beta/openai). The wire, tools, and usage all
+// match OpenAI; use a current Gemini model id (for example gemini-3-pro) and a
+// GEMINI_API_KEY.
+func NewGemini(cfg Config) *OpenAI {
+	return newOpenAICompat(cfg, "https://generativelanguage.googleapis.com/v1beta/openai", "/chat/completions")
+}
+
+// NewOllama builds a client for a local Ollama server through its OpenAI-compatible
+// endpoint (default http://localhost:11434). No API key is required; use a local
+// model id (for example llama3.2) on a build that supports tools.
+func NewOllama(cfg Config) *OpenAI {
+	return newOpenAICompat(cfg, "http://localhost:11434", "/v1/chat/completions")
+}
+
+// newOpenAICompat builds an OpenAI-wire client. cfg.BaseURL, when set, overrides
+// defaultBase (this is how a leash proxy URL is threaded in); path is the
+// chat-completions path for the endpoint.
+func newOpenAICompat(cfg Config, defaultBase, path string) *OpenAI {
+	b := cfg.BaseURL
+	if b == "" {
+		b = defaultBase
+	}
+	return &OpenAI{base: newBase(cfg), apiKey: cfg.APIKey, chatURL: strings.TrimRight(b, "/") + path}
 }
 
 // Complete sends one chat completion through leash and decodes the reply. A
@@ -44,7 +75,7 @@ func (c *OpenAI) Complete(ctx context.Context, req model.Request) (model.Respons
 	if err != nil {
 		return model.Response{}, fmt.Errorf("openai: encode request: %w", err)
 	}
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/v1/chat/completions", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.chatURL, bytes.NewReader(body))
 	if err != nil {
 		return model.Response{}, err
 	}

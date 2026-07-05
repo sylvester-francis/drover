@@ -40,8 +40,12 @@ type Anthropic struct {
 	maxTokens int
 }
 
-// NewAnthropic builds an Anthropic client from cfg.
+// NewAnthropic builds an Anthropic client from cfg. cfg.BaseURL overrides the
+// endpoint (a leash proxy URL to be governed); empty talks to Anthropic directly.
 func NewAnthropic(cfg Config) *Anthropic {
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = "https://api.anthropic.com"
+	}
 	mt := cfg.MaxTokens
 	if mt <= 0 {
 		mt = defaultMaxTokens
