@@ -220,7 +220,7 @@ Contributions are welcome. Good places to start:
 - Issues tagged [`good first issue`](https://github.com/sylvester-francis/drover/labels/good%20first%20issue) and [`help wanted`](https://github.com/sylvester-francis/drover/labels/help%20wanted), such as the end-to-end governed demo ([#6](https://github.com/sylvester-francis/drover/issues/6)).
 - [`DESIGN.md`](DESIGN.md) and the [decision records](docs/adr/) set the boundaries (drover orchestrates, rerun persists, leash governs), so a change fits the grain.
 
-Build and test with `go test -race ./...` and `go vet ./...` (see [`CONTRIBUTING.md`](CONTRIBUTING.md)). Please sign your commits off (`git commit -s`); no CLA.
+Substantial changes start with an approved **ADR** before implementation, and pull requests stay focused (a PR over 20 files is blocked); see [`CONTRIBUTING.md`](CONTRIBUTING.md). Build and test with `go test -race ./...` and `go vet ./...`. Please sign your commits off (`git commit -s`); no CLA.
 
 ## Author
 
