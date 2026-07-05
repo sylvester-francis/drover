@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Command quickstart runs a one-shot agent offline with the fake model — no API
-// key and no network — showing the durable loop from goal to answer.
+// Command quickstart runs a one-shot agent offline with the fake model (no API
+// key and no network), showing the durable loop from goal to answer.
 package main
 
 import (

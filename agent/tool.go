@@ -14,7 +14,7 @@
 
 // Package agent turns an agent definition into a durable rerun workflow: the
 // plan/act/observe loop, the tools it can call, and the folding of a run's
-// journal back into conversation state on recovery. It owns orchestration only —
+// journal back into conversation state on recovery. It owns orchestration only;
 // rerun owns durability, leash owns governance.
 package agent
 

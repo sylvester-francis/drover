@@ -56,7 +56,7 @@ func fail(err error) {
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `drover — durable, budgeted agent runner
+	fmt.Fprint(os.Stderr, `drover: durable, budgeted agent runner
 
 usage:
   drover run     [flags]   start a new agent job and run it to completion

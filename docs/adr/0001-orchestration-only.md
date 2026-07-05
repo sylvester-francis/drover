@@ -6,7 +6,7 @@ Status: accepted
 
 An agent runner has to solve three problems: run a plan/act/observe loop, make
 that loop survive a crash, and stop it from spending without bound. The middle
-and last problems are already solved well by two systems drover can build on —
+and last problems are already solved well by two systems drover can build on:
 [rerun](https://github.com/sylvester-francis/rerun) (durable execution) and
 [leash](https://github.com/sylvester-francis/leash) (spend governance). The
 question is how much drover should own.
@@ -15,8 +15,8 @@ question is how much drover should own.
 
 drover owns **only orchestration**: turning an agent definition into a rerun
 workflow, wiring the model client at a leash proxy, and surfacing progress. It
-persists nothing itself — the workflow journal is the source of truth — and
-governs nothing itself — every model call goes through the leash proxy.
+persists nothing itself (the workflow journal is the source of truth) and
+governs nothing itself (every model call goes through the leash proxy).
 
 ## Consequences
 

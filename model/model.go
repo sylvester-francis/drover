@@ -14,7 +14,7 @@
 
 // Package model is drover's provider-agnostic view of a chat model: the message,
 // tool, request, and response types, and the Client interface every provider
-// implements. It deliberately knows nothing about durability or governance —
+// implements. It deliberately knows nothing about durability or governance:
 // rerun journals these values and leash meters the calls; model only describes
 // the conversation.
 //
@@ -81,7 +81,7 @@ type Request struct {
 
 // Response is the model's reply. The meaningful outcomes are all VALUES here, not
 // error types, because rerun preserves a step's value across replay but not its
-// error's concrete type — so the agent loop can branch on these deterministically
+// error's concrete type, so the agent loop can branch on these deterministically
 // on recovery:
 //
 //   - ToolCalls non-empty ....... the model wants to act.

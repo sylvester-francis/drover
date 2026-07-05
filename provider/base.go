@@ -47,7 +47,7 @@ type Config struct {
 	// defaults to 4096 when unset); OpenAI leaves it to the model when zero.
 	MaxTokens int
 	// HTTP is the client to use; nil builds one with no overall timeout (a long
-	// completion must not be cut off — cancellation rides the request context).
+	// completion must not be cut off; cancellation rides the request context).
 	HTTP *http.Client
 }
 

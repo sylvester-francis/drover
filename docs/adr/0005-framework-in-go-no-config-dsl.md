@@ -10,7 +10,7 @@ in YAML/JSON) or a code-level plugin surface (define them in Go).
 
 ## Decision
 
-The framework packages — `agent`, `model`, `provider`, `runner`, `tools` — are
+The framework packages (`agent`, `model`, `provider`, `runner`, `tools`) are
 **public and importable**, and agents and tools are defined in **Go**. There is no
 config DSL. The CLI ships a default agent; power users compose their own in a
 little Go against the same interfaces.
@@ -21,7 +21,7 @@ little Go against the same interfaces.
   and `agent.Loop` composes them.
 - Nothing to design, document, and secure as a separate language; the type system
   does the validation a DSL would reinvent.
-- The packages are public (not `internal/`), so the API is a committed surface —
+- The packages are public (not `internal/`), so the API is a committed surface,
   appropriate at `v0.x`, where it may still change.
 
 ## Alternatives considered

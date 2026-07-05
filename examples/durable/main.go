@@ -57,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// The journal it left behind — a restart replays these, never re-runs them.
+	// The journal it left behind; a restart replays these, never re-runs them.
 	logs, _ := store1.LoadLogs(ctx, "job-1")
 	fmt.Println("journal for job-1:")
 	for _, l := range logs {
@@ -65,7 +65,7 @@ func main() {
 	}
 	store1.Close()
 
-	// A second process over the same store sees the finished run — the journal is
+	// A second process over the same store sees the finished run: the journal is
 	// the source of truth, not any in-memory state. On a crash mid-run, its
 	// Recover() would resume the job from exactly where the journal ends.
 	store2 := sqlite.New(db)

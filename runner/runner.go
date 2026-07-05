@@ -14,8 +14,8 @@
 
 // Package runner wires an agent Loop onto a rerun Engine: it registers the
 // workflow, starts and recovers runs, and lets a caller wait for one to finish.
-// It owns no durability of its own — the Engine's store is the source of truth —
-// and no governance — that is the leash proxy the model client points at.
+// It owns no durability of its own (the Engine's store is the source of truth)
+// and no governance (that is the leash proxy the model client points at).
 package runner
 
 import (

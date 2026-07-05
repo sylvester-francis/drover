@@ -38,7 +38,7 @@ func NewOpenAI(cfg Config) *OpenAI {
 
 // Complete sends one chat completion through leash and decodes the reply. A
 // governance refusal returns as Response.Stopped / Response.RetryAfter (a value),
-// never an error — see package model.
+// never an error. See package model.
 func (c *OpenAI) Complete(ctx context.Context, req model.Request) (model.Response, error) {
 	body, err := json.Marshal(openAIRequest(req))
 	if err != nil {

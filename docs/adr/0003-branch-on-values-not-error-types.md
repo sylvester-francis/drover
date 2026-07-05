@@ -11,7 +11,7 @@ it for budget (stop), refuse it for rate (wait and retry), or fail transiently
 But rerun preserves a step's return **value** across replay and *not* its error's
 concrete **type**: a replayed step failure comes back as a generic `*StepError`
 carrying the message only. So `errors.As(err, &SomeType)` inside a workflow passes
-on the live run and fails on replay — a determinism bug as real as a diverging
+on the live run and fails on replay, a determinism bug as real as a diverging
 tag. (This surfaced building drover; it is now documented in rerun's `StepError`.)
 
 ## Decision

@@ -6,13 +6,13 @@ Status: accepted
 
 An agent is a loop: plan, act, observe, repeat. Each trip is expensive (a model
 call costs tokens; a tool call takes a real action) and a job can run for many
-steps. A crash halfway through must not restart the whole job — that repeats work
+steps. A crash halfway through must not restart the whole job: that repeats work
 and pays for it twice.
 
 ## Decision
 
-Run the loop as a rerun workflow. Every nondeterministic input — the model's
-reply, a tool's result — is captured inside a `Do`, so each model call and tool
+Run the loop as a rerun workflow. Every nondeterministic input (the model's
+reply, a tool's result) is captured inside a `Do`, so each model call and tool
 call becomes a journaled step. drover holds **no state of its own**: on recovery
 the conversation history is refolded from the journal, which is the single source
 of truth for where a job is.

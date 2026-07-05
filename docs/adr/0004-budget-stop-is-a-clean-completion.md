@@ -5,7 +5,7 @@ Status: accepted
 ## Context
 
 Every model call goes through a leash proxy, which answers off the wire. leash
-refuses a call with `429` when a boundary trips — but a `429` means two different
+refuses a call with `429` when a boundary trips, but a `429` means two different
 things: with a `Retry-After` header it is transient rate-limit backpressure (the
 run is still alive); without one it is a terminal budget stop (the run is done).
 

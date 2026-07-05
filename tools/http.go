@@ -33,8 +33,8 @@ import (
 const maxBody = 8 << 10
 
 // HTTPGet returns a tool that fetches a URL with an HTTP GET. A GET has no side
-// effect, so re-running it after a crash is harmless — the idempotence rerun
-// asks of every tool.
+// effect, so re-running it after a crash is harmless. That idempotence is what
+// rerun asks of every tool.
 func HTTPGet() agent.Tool {
 	return agent.FuncTool{
 		Def: model.ToolSchema{

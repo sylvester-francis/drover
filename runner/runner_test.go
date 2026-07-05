@@ -126,7 +126,7 @@ func TestRunner_ToolThenAnswer(t *testing.T) {
 }
 
 // A run leash refuses on a boundary ends Done (not Failed) with the stop reason
-// recorded — the budget doing its job is a clean termination.
+// recorded; the budget doing its job is a clean termination.
 func TestRunner_GovernorStopIsCleanDone(t *testing.T) {
 	store := sqlite.New(filepath.Join(t.TempDir(), "drover.db"))
 	defer store.Close()
@@ -185,7 +185,7 @@ func (s *flakyStore) Append(ctx context.Context, runID string, l rerun.Log) erro
 // store recovers it, replaying completed steps from the journal without
 // re-executing them. The tool runs exactly once across the crash (replay skips
 // the completed step), while the un-journaled model step re-executes
-// (at-least-once) — the two durability properties, proven deterministically.
+// (at-least-once). These are the two durability properties, proven deterministically.
 func TestRunner_ResumesAfterCrashSkippingCompletedSteps(t *testing.T) {
 	base := sqlite.New(filepath.Join(t.TempDir(), "drover.db"))
 	defer base.Close()

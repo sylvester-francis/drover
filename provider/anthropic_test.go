@@ -94,7 +94,7 @@ func TestAnthropic_CoalescesToolResults(t *testing.T) {
 	if out.System != "sys" {
 		t.Fatalf("system = %q, want sys", out.System)
 	}
-	// Expect: user(goal), assistant(2 tool_use), user(2 tool_result) — three msgs.
+	// Expect three messages: user(goal), assistant(2 tool_use), user(2 tool_result).
 	if len(out.Messages) != 3 {
 		t.Fatalf("messages = %d, want 3: %+v", len(out.Messages), out.Messages)
 	}

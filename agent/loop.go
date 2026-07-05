@@ -40,7 +40,7 @@ type Result struct {
 }
 
 // Loop is the durable agent loop: an Agent, the model Client that drives it, and
-// the Toolset it may call. Its Run method is a rerun workflow — register it with
+// the Toolset it may call. Its Run method is a rerun workflow; register it with
 // Engine.Handle and every model call and tool call becomes a journaled step.
 type Loop struct {
 	Agent  Agent
@@ -54,8 +54,8 @@ const maxModelAttempts = 6
 
 // Run executes the plan/act/observe loop as a rerun workflow.
 //
-// Determinism rule: every nondeterministic input — the model's reply, a tool's
-// result, whether leash refused the call — is captured inside a Do, so replay
+// Determinism rule: every nondeterministic input (the model's reply, a tool's
+// result, whether leash refused the call) is captured inside a Do, so replay
 // reproduces the run from the journal without re-calling the model or re-running a
 // completed tool. The loop holds no state of its own: on recovery the message
 // history below is refolded from the journaled step results, exactly as it was.
@@ -121,7 +121,7 @@ func (l *Loop) Run(w *rerun.W) error {
 // rate-limit both arrive as VALUES on the Response (Stopped / RetryAfter), never
 // as an error type: rerun preserves a step's value across replay but not its
 // error's concrete type, so branching on an error type would diverge on recovery.
-// Only the PRESENCE of an error — a transient failure — is branched on here.
+// Only the PRESENCE of an error (a transient failure) is branched on here.
 func (l *Loop) callModel(w *rerun.W, step int, msgs []model.Message) (model.Response, error) {
 	req := model.Request{Model: l.Agent.Model, Messages: msgs, Tools: l.Tools.Schemas()}
 	for attempt := 0; attempt < maxModelAttempts; attempt++ {

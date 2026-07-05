@@ -16,7 +16,7 @@ package agent
 
 // Agent defines a durable job's capability: which model to drive, how to instruct
 // it, and the tools it may use. The task itself (the goal) is per-run and passed
-// at Start (journaled as the run's seed), not baked into the Agent — one Agent
+// at Start (journaled as the run's seed), not baked into the Agent; one Agent
 // definition runs many goals.
 //
 // An Agent is defined in Go, deliberately: drover ships extensible interfaces
