@@ -1,0 +1,31 @@
+# Compiled binary and build artifacts.
+/leash
+/fakeupstream
+/doccheck
+/cmd/leash/leash
+*.test
+*.out
+coverage.out
+
+# Local ledger databases (default lives in $HOME/.leash, but guard against
+# accidental in-repo databases created during testing or demos).
+*.db
+*.db-wal
+*.db-shm
+*.govlock
+.leash/
+
+# OS cruft.
+.DS_Store
+
+# Build guides are not part of the application and must not be committed.
+*-build-prompt.md
+
+# GoReleaser build output.
+/dist/
+
+# Example/user price tables should not be committed
+prices.json
+
+# built binary
+/drover
