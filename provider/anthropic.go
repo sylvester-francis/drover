@@ -51,7 +51,7 @@ func NewAnthropic(cfg Config) *Anthropic {
 
 // Complete sends one message-create through leash and decodes the reply. A
 // governance refusal returns as Response.Stopped / Response.RetryAfter (a value),
-// never an error — see package model.
+// never an error. See package model.
 func (c *Anthropic) Complete(ctx context.Context, req model.Request) (model.Response, error) {
 	body, err := json.Marshal(anthropicRequest(req, c.maxTokens))
 	if err != nil {

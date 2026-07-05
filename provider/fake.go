@@ -22,7 +22,7 @@ import (
 )
 
 // Fake is an offline model.Client that returns canned responses, so drover can
-// run without an API key or a live model — for examples, the quickstart, and CI.
+// run without an API key or a live model: for examples, the quickstart, and CI.
 // It never touches the network, so it is not governed by leash; point a real
 // provider at a leash URL to exercise governance.
 type Fake struct {
