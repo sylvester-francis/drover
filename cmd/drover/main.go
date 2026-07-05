@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // Command drover runs durable, multi-step agent jobs on rerun, with every model
-// call governed by the leash proxy. This is a scaffold; the durable runner is
-// being built on rerun's execution engine (see DESIGN.md).
+// call governed by the leash proxy. A job is a rerun workflow: a crash resumes at
+// the step that was in flight rather than restarting the whole job.
 package main
 
 import (
@@ -26,10 +26,43 @@ import (
 var version = "dev"
 
 func main() {
-	if len(os.Args) > 1 && (os.Args[1] == "version" || os.Args[1] == "--version") {
+	if len(os.Args) < 2 {
+		usage()
+		os.Exit(2)
+	}
+	switch os.Args[1] {
+	case "run":
+		fail(runCmd(os.Args[2:]))
+	case "resume":
+		fail(resumeCmd(os.Args[2:]))
+	case "version", "--version", "-v":
 		fmt.Printf("drover %s\n", version)
+	case "help", "-h", "--help":
+		usage()
+	default:
+		fmt.Fprintf(os.Stderr, "drover: unknown command %q\n\n", os.Args[1])
+		usage()
+		os.Exit(2)
+	}
+}
+
+// fail prints err and exits non-zero; flag.ErrHelp (already printed) exits clean.
+func fail(err error) {
+	if err == nil {
 		return
 	}
-	fmt.Fprintln(os.Stderr, "drover: durable agent runner (scaffold). See DESIGN.md for the plan.")
-	os.Exit(2)
+	fmt.Fprintln(os.Stderr, "drover:", err)
+	os.Exit(1)
+}
+
+func usage() {
+	fmt.Fprint(os.Stderr, `drover — durable, budgeted agent runner
+
+usage:
+  drover run     [flags]   start a new agent job and run it to completion
+  drover resume  [flags]   resume jobs a restart left in flight
+  drover version           print the version
+
+Run "drover run -h" or "drover resume -h" for flags.
+`)
 }
