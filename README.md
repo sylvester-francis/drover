@@ -213,6 +213,11 @@ go vet ./...
 - **[leash](https://github.com/sylvester-francis/leash):** the spend governor (a reverse proxy that stops a run when it trips a budget).
 - **drover:** the durable agent runner that composes both.
 
+## Author
+
+Created and maintained by [Sylvester Francis](https://github.com/sylvester-francis).
+
 ## License
 
-[Apache License 2.0](LICENSE) © 2026 Sylvester Francis
+[Apache License 2.0](LICENSE) © 2026 Sylvester Francis, with attribution retained
+per the [`NOTICE`](NOTICE) file.
