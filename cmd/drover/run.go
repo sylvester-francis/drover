@@ -176,21 +176,14 @@ func (c *jobFlags) requireModel() error {
 	return nil
 }
 
-// buildClient selects a model.Client. When leashURL is set, calls route through the
-// leash proxy (openai, gemini, and ollama all speak the OpenAI wire to it; anthropic
-// speaks its own), and leash forwards to the real upstream. When leashURL is empty,
-// drover talks to the provider's own endpoint directly, ungoverned.
+// buildClient selects a model.Client and points it at leashURL when set (calls
+// route through the leash proxy, which forwards to its --upstream) or at the
+// provider's own endpoint when empty (ungoverned). It dispatches by provider so
+// each keeps its own OpenAI-compatible path even through the proxy: Gemini's is
+// /v1beta/openai/chat/completions, not /v1/chat/completions, so forcing the OpenAI
+// path here would misroute Gemini when leash joins it onto the Gemini upstream.
 func buildClient(prov, leashURL string, cfg provider.Config) (model.Client, error) {
-	if prov == "fake" {
-		return fakeClient(), nil
-	}
-	if leashURL != "" {
-		cfg.BaseURL = leashURL
-		if prov == "anthropic" {
-			return provider.NewAnthropic(cfg), nil
-		}
-		return provider.NewOpenAI(cfg), nil
-	}
+	cfg.BaseURL = leashURL
 	switch prov {
 	case "openai":
 		return provider.NewOpenAI(cfg), nil
@@ -200,6 +193,8 @@ func buildClient(prov, leashURL string, cfg provider.Config) (model.Client, erro
 		return provider.NewGemini(cfg), nil
 	case "ollama":
 		return provider.NewOllama(cfg), nil
+	case "fake":
+		return fakeClient(), nil
 	default:
 		return nil, fmt.Errorf("unknown provider %q (want openai, anthropic, gemini, ollama, or fake)", prov)
 	}

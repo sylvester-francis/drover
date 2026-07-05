@@ -7,13 +7,16 @@
 #   drover run (openai client)  ->  leash serve  ->  fake OpenAI upstream
 #
 # The fake upstream returns a tool call plus a usage block every turn, so the agent
-# keeps looping; leash meters each call against a price table. Two scenarios:
+# keeps looping; leash meters each call against a price table. Three scenarios:
 #
 #   1. Cost budget (terminal): when the dollar budget trips, leash returns 429
 #      without Retry-After; drover maps it to Stopped: cost_budget and finishes Done.
 #   2. Rate limit (transient): leash returns 429 with Retry-After; drover Sleeps
 #      durably and resumes, then a budget stops it. This is the transient-vs-terminal
 #      distinction the governor seam draws.
+#   3. Governed Gemini: drover --provider gemini routes through leash to Gemini's
+#      OpenAI-compatible path (/v1beta/openai/chat/completions, not a doubled /v1),
+#      proving the provider-path routing end to end.
 #
 # No API key and no real model: fully offline and deterministic. leash is pulled
 # with "go install ...@latest", so no leash checkout is needed.
@@ -24,10 +27,11 @@ ROOT="$(cd "$DIR/../.." && pwd)"
 FAKE_PORT="${FAKE_PORT:-18080}"
 LEASH_PORT="${LEASH_PORT:-18088}"
 LEASH_PORT2="${LEASH_PORT2:-18089}"
+LEASH_PORT3="${LEASH_PORT3:-18090}"
 TMP="$(mktemp -d)"
 
 cleanup() {
-  for pid in "${FAKE_PID:-}" "${LEASH_PID:-}" "${LEASH_PID2:-}"; do
+  for pid in "${FAKE_PID:-}" "${LEASH_PID:-}" "${LEASH_PID2:-}" "${LEASH_PID3:-}"; do
     [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
   done
   rm -rf "$TMP"
@@ -100,6 +104,34 @@ if grep -q "sleep:" "$TMP/rate.out" && grep -q "stopped after" "$TMP/rate.out"; 
 else
   echo "  FAIL: expected a durable sleep then a clean stop under the rate limit."
   cat "$TMP/rate.out"; tail -n 20 "$TMP/leash2.log"; exit 1
+fi
+
+# ---- Scenario 3: governed Gemini routes to the Gemini OpenAI-compatible path -----
+echo
+echo "### Scenario 3: governed Gemini through leash (provider-path routing)"
+"$TMP/leash" serve \
+  --listen "127.0.0.1:$LEASH_PORT3" --upstream "http://127.0.0.1:$FAKE_PORT/v1beta/openai" \
+  --prices "$DIR/prices.json" --max-cost 0.06 --max-calls 0 --insecure \
+  --db "$TMP/leash3.db" --log-format text >"$TMP/leash3.log" 2>&1 &
+LEASH_PID3=$!
+disown "$LEASH_PID3" 2>/dev/null || true
+wait_port "$LEASH_PORT3" || { echo "leash (gemini) did not come up"; cat "$TMP/leash3.log"; exit 1; }
+
+"$TMP/drover" run --provider gemini --model gemini-demo \
+  --leash-url "http://127.0.0.1:$LEASH_PORT3" --db "$TMP/drover3.db" --run gemini-run \
+  --goal "keep working until the governor stops you" 2>&1 | tee "$TMP/gemini.out"
+
+echo
+echo "  the upstream saw Gemini's OpenAI-compatible path (a doubled /v1 would mean misrouting):"
+grep -m1 "POST /v1beta/openai/chat/completions" "$TMP/fake.log" | sed 's/^/    /' || true
+
+if grep -q "stopped after" "$TMP/gemini.out" && grep -q "cost_budget" "$TMP/gemini.out" \
+   && grep -q "POST /v1beta/openai/chat/completions" "$TMP/fake.log"; then
+  echo "  PASS: drover --provider gemini routed through leash to /v1beta/openai/chat/completions,"
+  echo "        leash metered it as OpenAI-compatible, and the budget stopped the run."
+else
+  echo "  FAIL: governed Gemini did not route to the Gemini path or stop as expected."
+  cat "$TMP/gemini.out"; tail -n 20 "$TMP/leash3.log"; exit 1
 fi
 
 echo

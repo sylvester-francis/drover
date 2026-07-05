@@ -1,3 +1,4 @@
 {
-  "demo-model": { "input": 10, "output": 10, "reasoning": 0 }
+  "demo-model": { "input": 10, "output": 10, "reasoning": 0 },
+  "gemini-demo": { "input": 10, "output": 10, "reasoning": 0 }
 }
