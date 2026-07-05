@@ -21,12 +21,18 @@ jobs:
       - name: Install gremlins
         run: go install github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0
       # Mutate the packages where the logic lives and has direct tests: the governor
-      # seam (429 classification) and the engine wiring. gremlins unleash takes one
-      # path, so loop. A covered mutant the tests do not kill is a gap in the suite.
-      - name: Mutation test the governor seam and engine wiring
+      # seam (429 classification), the engine wiring, and the CLI's provider routing
+      # and key selection. gremlins unleash takes one path, so loop. A covered mutant
+      # the tests do not kill is a gap; cmd/drover's untested CLI plumbing shows as
+      # "not covered", which does not count against efficacy.
+      - name: Mutation test the seam, the wiring, and provider routing
         run: |
           set -e
-          for pkg in ./provider ./runner; do
+          # gremlins measures a baseline coverage per package with `go test`; the Go
+          # test cache would hand later packages a cached, coverage-less result, so
+          # disable it. The gate is advisory (no threshold): it reports, never blocks.
+          export GOFLAGS=-count=1
+          for pkg in ./provider ./runner ./cmd/drover; do
             echo "== gremlins unleash $pkg =="
             gremlins unleash "$pkg"
           done
