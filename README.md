@@ -213,6 +213,15 @@ go vet ./...
 - **[leash](https://github.com/sylvester-francis/leash):** the spend governor (a reverse proxy that stops a run when it trips a budget).
 - **drover:** the durable agent runner that composes both.
 
+## Contributing
+
+Contributions are welcome. Good places to start:
+
+- Issues tagged [`good first issue`](https://github.com/sylvester-francis/drover/labels/good%20first%20issue) and [`help wanted`](https://github.com/sylvester-francis/drover/labels/help%20wanted), such as the end-to-end governed demo ([#6](https://github.com/sylvester-francis/drover/issues/6)).
+- [`DESIGN.md`](DESIGN.md) and the [decision records](docs/adr/) set the boundaries (drover orchestrates, rerun persists, leash governs), so a change fits the grain.
+
+Build and test with `go test -race ./...` and `go vet ./...` (see [`CONTRIBUTING.md`](CONTRIBUTING.md)). Please sign your commits off (`git commit -s`); no CLA.
+
 ## Author
 
 Created and maintained by [Sylvester Francis](https://github.com/sylvester-francis).
