@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>drover — durable, budgeted agent runner</title>
+<meta name="description" content="An agent is a loop. drover makes that loop survive a crash and stay under budget — by running it as a rerun workflow with every model call governed by the leash proxy." />
+<style>
+  :root {
+    --bg: #0c0a07;
+    --panel: #17130d;
+    --panel-2: #120f0a;
+    --border: #322a1c;
+    --fg: #efe9df;
+    --muted: #ab9f8c;
+    --accent: #e0af68;
+    --accent-2: #7aa2f7;
+    --ok: #7fca8c;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #faf8f4; --panel: #ffffff; --panel-2: #f3efe7; --border: #e7e0d3;
+      --fg: #1b160e; --muted: #6c6252; --accent: #a9720c; --accent-2: #3b64c4; --ok: #2f8a45;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: var(--sans); line-height: 1.6; font-size: 17px; letter-spacing: 0.1px;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 22px; }
+  code, pre { font-family: var(--mono); }
+
+  header { padding: 74px 0 40px; text-align: center; }
+  .logo {
+    font-family: var(--mono); font-weight: 700; font-size: clamp(40px, 9vw, 76px);
+    letter-spacing: -0.02em; margin: 0; line-height: 1;
+  }
+  .logo .glyph { color: var(--accent); }
+  .tagline { color: var(--muted); font-size: clamp(15px, 2.6vw, 19px); margin: 16px 0 4px; }
+  .rule { color: var(--accent); font-family: var(--mono); font-size: 14px; margin-top: 10px; }
+  .lead { max-width: 660px; margin: 26px auto 0; font-size: clamp(17px, 2.6vw, 20px); }
+  .lead strong { color: var(--fg); }
+
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 32px 0 6px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px;
+    border-radius: 9px; border: 1px solid var(--border); background: var(--panel);
+    color: var(--fg); font-weight: 600; font-size: 15px;
+  }
+  .btn.primary { background: var(--accent); color: #1a1204; border-color: transparent; }
+  .btn:hover { text-decoration: none; border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.06); border-color: transparent; }
+
+  .install {
+    max-width: 560px; margin: 22px auto 0; background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 9px; padding: 12px 16px;
+    font-family: var(--mono); font-size: 14px; color: var(--muted); text-align: left; overflow-x: auto;
+  }
+  .install::before { content: "$ "; color: var(--accent); }
+  .install span { color: var(--fg); }
+
+  section { padding: 30px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 0 0 18px; font-weight: 700; }
+
+  pre {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 11px;
+    padding: 18px 20px; overflow-x: auto; font-size: 14px; line-height: 1.65; margin: 0;
+  }
+  .k { color: var(--accent-2); } .s { color: var(--accent); } .c { color: var(--muted); font-style: italic; } .f { color: var(--ok); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 11px; padding: 18px 20px; }
+  .card h3 { margin: 0 0 8px; font-size: 16px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .card .icon { font-family: var(--mono); color: var(--accent); font-size: 15px; }
+
+  .compose { display: flex; align-items: stretch; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .node { flex: 1 1 200px; background: var(--panel); border: 1px solid var(--border); border-radius: 11px; padding: 16px 18px; text-align: center; }
+  .node b { font-family: var(--mono); font-size: 16px; }
+  .node.mid b { color: var(--accent); }
+  .node small { display: block; color: var(--muted); margin-top: 6px; font-size: 14px; }
+
+  .note { color: var(--muted); font-size: 15px; }
+  .note strong { color: var(--fg); }
+
+  footer { padding: 40px 0 60px; text-align: center; color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); }
+  footer a { margin: 0 10px; }
+  .badges { margin-top: 10px; font-family: var(--mono); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="logo">dr<span class="glyph">&#10132;</span>ver</h1>
+    <p class="tagline">Durable, budgeted agent runner</p>
+    <p class="rule">plan &middot; act &middot; observe &middot; survive</p>
+    <p class="lead">An agent is a loop. drover makes that loop <strong>survive a crash and stay under budget</strong> &mdash; by running it as a <a href="https://github.com/sylvester-francis/rerun">rerun</a> workflow with every model call governed by the <a href="https://github.com/sylvester-francis/leash">leash</a> proxy.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/sylvester-francis/drover">GitHub &rarr;</a>
+      <a class="btn" href="https://github.com/sylvester-francis/drover/blob/main/DESIGN.md">Design</a>
+      <a class="btn" href="https://github.com/sylvester-francis/rerun">rerun</a>
+      <a class="btn" href="https://github.com/sylvester-francis/leash">leash</a>
+    </div>
+    <div class="install">go install github.com/sylvester-francis/drover/cmd/<span>drover@latest</span></div>
+  </header>
+
+  <section>
+    <h2>Two ways the loop breaks &mdash; each already solved</h2>
+    <p class="lead" style="margin-top:0;text-align:left;max-width:none">An agent is a loop: plan, act, observe, repeat. In production it <strong>isn't durable</strong> &mdash; a crash halfway through a twelve-step job restarts the whole job and pays for it twice &mdash; and it <strong>isn't bounded</strong> &mdash; nothing stops a stuck loop from spending forever. drover doesn't reinvent either fix. It runs the loop as a rerun workflow and points every model call at a leash proxy: <strong>rerun makes the run survive a crash; leash makes it survive the invoice.</strong></p>
+  </section>
+
+  <section>
+    <h2>The loop is a durable workflow</h2>
+<pre><span class="k">for</span> step := 0; step &lt; maxSteps; step++ {
+    resp := <span class="f">Do</span>(<span class="s">"model-N"</span>, callModel) <span class="c">// a completion, through the leash proxy</span>
+    <span class="k">if</span> resp.Stopped != <span class="s">""</span> { <span class="k">break</span> } <span class="c">// leash tripped a budget &rarr; stop, cleanly</span>
+    <span class="k">if</span> !resp.<span class="f">Acting</span>()    { <span class="k">break</span> } <span class="c">// a final answer &rarr; done</span>
+    <span class="k">for</span> _, call := <span class="k">range</span> resp.ToolCalls {
+        <span class="f">Do</span>(<span class="s">"tool-N"</span>, invokeTool) <span class="c">// a side effect, journaled once</span>
+    }
+}</pre>
+    <p class="note" style="margin-top:16px">Every nondeterministic input &mdash; the model's reply, a tool's result &mdash; is captured inside a <code>Do</code>, so a crash resumes at the step that was in flight. drover keeps <strong>no state of its own</strong>: on recovery the conversation is refolded from the journal. A completed step replays without re-running; a tool caught mid-flight re-runs (at-least-once), so <strong>tools must be idempotent</strong>.</p>
+  </section>
+
+  <section>
+    <h2>Owns only orchestration</h2>
+    <div class="grid">
+      <div class="card"><span class="icon">&#8635;</span><h3>Durable by construction</h3><p>The loop is a rerun workflow. A crash resumes at the in-flight step, replaying completed ones from the journal &mdash; no repeated work, no double charge.</p></div>
+      <div class="card"><span class="icon">&#10132;</span><h3>Bounded by leash</h3><p>Every call goes through the leash proxy. When a budget trips, the call is refused and the run stops &mdash; cleanly, with the reason recorded.</p></div>
+      <div class="card"><span class="icon">&#9679;</span><h3>Composes, owns nothing</h3><p>No persistence of its own, no governance of its own. drover is one durable agent leash can govern &mdash; not a special case.</p></div>
+      <div class="card"><span class="icon">&#9881;</span><h3>Any provider, in Go</h3><p>OpenAI or Anthropic behind one interface, plus an offline fake. Define agents and tools in a little Go &mdash; no SDK lock-in, no config DSL.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Three layers, one job</h2>
+    <div class="compose">
+      <div class="node"><b>rerun</b><small>durable execution<br/>crash &middot; replay &middot; resume</small></div>
+      <div class="node mid"><b>drover</b><small>orchestrates the loop<br/>plan &middot; act &middot; observe</small></div>
+      <div class="node"><b>leash</b><small>spend governance<br/>meter &middot; refuse &middot; stop</small></div>
+    </div>
+    <p class="note" style="text-align:center;margin-top:16px"><strong>drover orchestrates. rerun makes it durable. leash makes it affordable.</strong></p>
+  </section>
+
+  <footer>
+    <div>
+      <a href="https://github.com/sylvester-francis/drover">Source</a>
+      <a href="https://github.com/sylvester-francis/drover/blob/main/DESIGN.md">Design</a>
+      <a href="https://github.com/sylvester-francis/rerun">rerun</a>
+      <a href="https://github.com/sylvester-francis/leash">leash</a>
+    </div>
+    <div class="badges">Apache-2.0 &middot; Go 1.25+ &middot; orchestration only</div>
+  </footer>
+</div>
+</body>
+</html>
