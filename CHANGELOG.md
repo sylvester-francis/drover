@@ -9,6 +9,14 @@ version is `0.x` the public API may change between minor releases.
 
 ### Added
 
+- Token usage on a completion. `model.Response` now carries a provider-agnostic
+  `Usage` (input, output, and total tokens), populated by the OpenAI and Anthropic
+  clients from the reply's usage block, and `agent.Result` reports the run total
+  accumulated across model calls. Usage is counts only: pricing stays with the
+  caller or the leash proxy. Like every response value it journals and replays, so
+  a resumed run keeps its token total, and a run recorded before this change reads
+  back a zero usage. See
+  [ADR-0006](docs/adr/0006-token-usage-on-the-response.md).
 - GoReleaser and a `release` workflow: signed, cross-platform CLI binaries with a
   CycloneDX SBOM and cosign checksum signatures on each tag.
 - [`docs/using-drover.md`](docs/using-drover.md), the how-to guide, and

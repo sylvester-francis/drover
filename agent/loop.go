@@ -33,10 +33,12 @@ type StartInput struct {
 // Result is the terminal record of a run, written once with rerun.Return and read
 // back with rerun.Result. Stopped is set when leash ended the run on a boundary
 // (or the step cap tripped); Output holds the agent's final answer otherwise.
+// Usage is the token total the run consumed across its model calls.
 type Result struct {
-	Output  string `json:"output,omitempty"`
-	Stopped string `json:"stopped,omitempty"`
-	Steps   int    `json:"steps"`
+	Output  string      `json:"output,omitempty"`
+	Stopped string      `json:"stopped,omitempty"`
+	Steps   int         `json:"steps"`
+	Usage   model.Usage `json:"usage,omitempty"`
 }
 
 // Loop is the durable agent loop: an Agent, the model Client that drives it, and
@@ -74,15 +76,19 @@ func (l *Loop) Run(w *rerun.W) error {
 		maxSteps = DefaultMaxSteps
 	}
 
+	// usage accumulates the tokens each model call reports. It sums journaled
+	// Response values, so replay reproduces the same total.
+	var usage model.Usage
 	for step := 0; step < maxSteps; step++ {
 		resp, err := l.callModel(w, step, msgs)
 		if err != nil {
 			return err
 		}
+		usage = usage.Add(resp.Usage)
 		if resp.Stopped != "" {
 			// leash ended the run on a boundary. That is the budget doing its job,
 			// not a failure: record it and finish cleanly (Done, not Failed).
-			rerun.Return(w, Result{Stopped: resp.Stopped, Steps: step + 1})
+			rerun.Return(w, Result{Stopped: resp.Stopped, Steps: step + 1, Usage: usage})
 			return nil
 		}
 
@@ -94,7 +100,7 @@ func (l *Loop) Run(w *rerun.W) error {
 
 		if !resp.Acting() {
 			// A final answer with no tool calls: the agent is done.
-			rerun.Return(w, Result{Output: resp.Content, Steps: step + 1})
+			rerun.Return(w, Result{Output: resp.Content, Steps: step + 1, Usage: usage})
 			return nil
 		}
 
@@ -112,7 +118,7 @@ func (l *Loop) Run(w *rerun.W) error {
 		}
 	}
 
-	rerun.Return(w, Result{Stopped: "max_steps", Steps: maxSteps})
+	rerun.Return(w, Result{Stopped: "max_steps", Steps: maxSteps, Usage: usage})
 	return nil
 }
 

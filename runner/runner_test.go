@@ -90,8 +90,14 @@ func TestRunner_ToolThenAnswer(t *testing.T) {
 	defer store.Close()
 
 	fake := &fakeModel{steps: []model.Response{
-		{ToolCalls: []model.ToolCall{{ID: "c1", Name: "echo", Args: json.RawMessage(`{"text":"hi there"}`)}}},
-		{Content: "the tool said: hi there"},
+		{
+			ToolCalls: []model.ToolCall{{ID: "c1", Name: "echo", Args: json.RawMessage(`{"text":"hi there"}`)}},
+			Usage:     model.Usage{InputTokens: 10, OutputTokens: 5, TotalTokens: 15},
+		},
+		{
+			Content: "the tool said: hi there",
+			Usage:   model.Usage{InputTokens: 20, OutputTokens: 8, TotalTokens: 28},
+		},
 	}}
 	r := New(store, newLoop(fake, echoTool()))
 
@@ -119,6 +125,10 @@ func TestRunner_ToolThenAnswer(t *testing.T) {
 	}
 	if res.Steps != 2 {
 		t.Fatalf("steps = %d, want 2", res.Steps)
+	}
+	// The run total is the sum of both model calls' usage.
+	if want := (model.Usage{InputTokens: 30, OutputTokens: 13, TotalTokens: 43}); res.Usage != want {
+		t.Fatalf("usage = %+v, want %+v (summed across both model calls)", res.Usage, want)
 	}
 	if got := fake.callCount(); got != 2 {
 		t.Fatalf("model calls = %d, want 2", got)

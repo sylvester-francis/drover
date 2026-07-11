@@ -147,6 +147,12 @@ A budget stop is a clean termination: the run finishes `Done` with the reason in
 `Result.Stopped` (for example `cost_budget`), so you can tell "finished the task"
 from "stopped on budget".
 
+`Result.Usage` reports the tokens the run consumed (input, output, and total),
+accumulated across its model calls, and each `model.Response` carries the same
+`Usage` for a single call. The counts come straight from the provider; pricing
+them is up to you or the leash proxy. The total is a journaled value, so a resumed
+run keeps it.
+
 ---
 
 ## 6. The CLI
