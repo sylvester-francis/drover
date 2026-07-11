@@ -14,3 +14,4 @@ Format: context, the decision, its consequences, and the alternatives weighed.
 | [0003](0003-branch-on-values-not-error-types.md) | Branch on journaled values, never on error types; they do not survive replay |
 | [0004](0004-budget-stop-is-a-clean-completion.md) | A leash budget stop ends the run cleanly (Done), not failed |
 | [0005](0005-framework-in-go-no-config-dsl.md) | The framework is public Go packages; agents are defined in code, not a DSL |
+| [0006](0006-token-usage-on-the-response.md) | Surface token usage on the response; drover reports counts, leash prices |

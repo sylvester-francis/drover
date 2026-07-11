@@ -65,10 +65,12 @@ func TestOpenAI_SendsLoopIDAndParsesToolCall(t *testing.T) {
 	}
 }
 
-// A plain content answer decodes to Response.Content.
-func TestOpenAI_ParsesContent(t *testing.T) {
+// A plain content answer decodes to Response.Content, and the reply's usage block
+// decodes to Response.Usage.
+func TestOpenAI_ParsesContentAndUsage(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		io.WriteString(w, `{"choices":[{"message":{"content":"the answer"},"finish_reason":"stop"}]}`)
+		io.WriteString(w, `{"choices":[{"message":{"content":"the answer"},"finish_reason":"stop"}],`+
+			`"usage":{"prompt_tokens":11,"completion_tokens":7,"total_tokens":18}}`)
 	}))
 	defer srv.Close()
 	c := NewOpenAI(Config{BaseURL: srv.URL})
@@ -78,6 +80,9 @@ func TestOpenAI_ParsesContent(t *testing.T) {
 	}
 	if resp.Content != "the answer" || resp.Acting() {
 		t.Fatalf("resp = %+v, want content-only answer", resp)
+	}
+	if want := (model.Usage{InputTokens: 11, OutputTokens: 7, TotalTokens: 18}); resp.Usage != want {
+		t.Fatalf("usage = %+v, want %+v", resp.Usage, want)
 	}
 }
 

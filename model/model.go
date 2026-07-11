@@ -99,10 +99,33 @@ type Response struct {
 	Finish     string        `json:"finish,omitempty"`
 	Stopped    string        `json:"stopped,omitempty"`
 	RetryAfter time.Duration `json:"retry_after,omitempty"`
+	// Usage reports the tokens the completion consumed, when the provider returns
+	// them. It is zero on a governor verdict, where no completion happened.
+	Usage Usage `json:"usage,omitempty"`
 }
 
 // Acting reports whether the model asked to call at least one tool.
 func (r Response) Acting() bool { return len(r.ToolCalls) > 0 }
+
+// Usage reports the token counts a completion consumed, as the provider itself
+// measured them. It is provider-agnostic: OpenAI's prompt and completion tokens
+// and Anthropic's input and output tokens both map onto these fields. It is a
+// count, not a cost: turning tokens into money is the caller's or the leash
+// proxy's concern, so drover reports the number and prices nothing.
+type Usage struct {
+	InputTokens  int `json:"input_tokens,omitempty"`
+	OutputTokens int `json:"output_tokens,omitempty"`
+	TotalTokens  int `json:"total_tokens,omitempty"`
+}
+
+// Add returns the sum of two usages, for accumulating a run total across calls.
+func (u Usage) Add(o Usage) Usage {
+	return Usage{
+		InputTokens:  u.InputTokens + o.InputTokens,
+		OutputTokens: u.OutputTokens + o.OutputTokens,
+		TotalTokens:  u.TotalTokens + o.TotalTokens,
+	}
+}
 
 // Client is a provider-agnostic chat client. drover ships OpenAI- and
 // Anthropic-compatible implementations; each points at whatever endpoint the

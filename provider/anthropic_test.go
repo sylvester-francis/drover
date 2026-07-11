@@ -40,7 +40,7 @@ func TestAnthropic_HeadersSystemAndToolUse(t *testing.T) {
 		io.WriteString(w, `{"content":[`+
 			`{"type":"text","text":"let me check"},`+
 			`{"type":"tool_use","id":"toolu_1","name":"echo","input":{"text":"hi"}}`+
-			`],"stop_reason":"tool_use"}`)
+			`],"stop_reason":"tool_use","usage":{"input_tokens":9,"output_tokens":4}}`)
 	}))
 	defer srv.Close()
 
@@ -70,6 +70,10 @@ func TestAnthropic_HeadersSystemAndToolUse(t *testing.T) {
 	}
 	if string(resp.ToolCalls[0].Args) != `{"text":"hi"}` {
 		t.Fatalf("args = %s", resp.ToolCalls[0].Args)
+	}
+	// Anthropic sends input and output tokens; the total is computed as their sum.
+	if want := (model.Usage{InputTokens: 9, OutputTokens: 4, TotalTokens: 13}); resp.Usage != want {
+		t.Fatalf("usage = %+v, want %+v", resp.Usage, want)
 	}
 }
 

@@ -121,7 +121,15 @@ type antResponse struct {
 		Name  string          `json:"name"`
 		Input json.RawMessage `json:"input"`
 	} `json:"content"`
-	StopReason string `json:"stop_reason"`
+	StopReason string   `json:"stop_reason"`
+	Usage      antUsage `json:"usage"`
+}
+
+// antUsage is the Messages API token report. Anthropic sends input and output
+// counts and no total, so decodeAnthropic computes the total.
+type antUsage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
 }
 
 // anthropicRequest maps a provider-agnostic Request onto the Messages wire shape.
@@ -179,7 +187,14 @@ func decodeAnthropic(body []byte) (model.Response, error) {
 	if err := json.Unmarshal(body, &r); err != nil {
 		return model.Response{}, fmt.Errorf("anthropic: decode response: %w", err)
 	}
-	out := model.Response{Finish: r.StopReason}
+	out := model.Response{
+		Finish: r.StopReason,
+		Usage: model.Usage{
+			InputTokens:  r.Usage.InputTokens,
+			OutputTokens: r.Usage.OutputTokens,
+			TotalTokens:  r.Usage.InputTokens + r.Usage.OutputTokens,
+		},
+	}
 	var text strings.Builder
 	for _, b := range r.Content {
 		switch b.Type {

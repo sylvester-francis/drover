@@ -142,6 +142,13 @@ type oaiChoice struct {
 
 type oaiResponse struct {
 	Choices []oaiChoice `json:"choices"`
+	Usage   oaiUsage    `json:"usage"`
+}
+
+type oaiUsage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
 }
 
 // openAIRequest maps a provider-agnostic Request onto the Chat Completions wire
@@ -182,7 +189,15 @@ func decodeOpenAI(body []byte) (model.Response, error) {
 		return model.Response{}, fmt.Errorf("openai: response carried no choices")
 	}
 	ch := r.Choices[0]
-	out := model.Response{Content: ch.Message.Content, Finish: ch.FinishReason}
+	out := model.Response{
+		Content: ch.Message.Content,
+		Finish:  ch.FinishReason,
+		Usage: model.Usage{
+			InputTokens:  r.Usage.PromptTokens,
+			OutputTokens: r.Usage.CompletionTokens,
+			TotalTokens:  r.Usage.TotalTokens,
+		},
+	}
 	for _, tc := range ch.Message.ToolCalls {
 		out.ToolCalls = append(out.ToolCalls, model.ToolCall{
 			ID:   tc.ID,
